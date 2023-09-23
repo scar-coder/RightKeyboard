@@ -224,13 +224,11 @@ namespace RightKeyboard {
 		}
 
 		private void SetDefaultLayout(ushort layout) {
-			//IntPtr hkl = API.LoadKeyboardLayout(layout, 0);
-			//Debug.Assert(hkl != IntPtr.Zero);
-			//if(hkl == IntPtr.Zero) {
-			//    throw Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error());
-			//}
-
-			IntPtr hkl = new IntPtr(unchecked((int)((uint)layout << 16 | (uint)layout)));
+			IntPtr hkl = API.LoadKeyboardLayout(layout, 0);
+			Debug.Assert(hkl != IntPtr.Zero);
+			if(hkl == IntPtr.Zero) {
+			    throw Marshal.GetExceptionForHR(Marshal.GetHRForLastWin32Error());
+			}
 
 			bool ok = API.SystemParametersInfo(API.SPI_SETDEFAULTINPUTLANG, 0, new IntPtr[] { hkl }, API.SPIF_SENDCHANGE);
 			Debug.Assert(ok);

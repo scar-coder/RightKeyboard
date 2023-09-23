@@ -168,6 +168,10 @@ namespace RightKeyboard.Win32 {
 			return localeHandles;
 		}
 
+        /**
+         * Sets the default input language for the system shell and applications. The specified language must be displayable using the current system character set. The pvParam parameter must point to an HKL variable that contains the input locale identifier for the default language. For more information, see Languages, Locales, and Keyboard Layouts.
+         * https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa
+         */
 		public const int SPI_SETDEFAULTINPUTLANG = 90;
 		public const int SPIF_SENDCHANGE = 2;
 
