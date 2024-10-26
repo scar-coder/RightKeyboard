@@ -78,23 +78,56 @@ namespace RightKeyboard.Win32 {
 			Debug.Assert(res == nDevices);
 			return deviceList;
 		}
-
+		
 		public const int RIM_TYPEKEYBOARD = 1;
 
-		[DllImport("user32.dll")]
+	        [DllImport("user32.dll")]
 		private static extern int GetRawInputDeviceInfo(IntPtr deviceHandle, uint command, [Out] StringBuilder data, ref uint dataSize);
 
+		// functions for comunication with AHK
+		private static string lastDeviceName = string.Empty;
+	
+	        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+	        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName); //find AHK window
+	
+	        [DllImport("user32.dll")]
+	        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam); // send message to AHK script
+	
+	        private const uint WM_USER = 0x0400;
+	        private const uint WM_DEVICECHANGE = WM_USER + 1; // Message to send to AHK
+	
+	
+	        private static void SendDeviceToAutoHotkey(string deviceName) {
+	            IntPtr hWnd = FindWindow(null, "AutoHotkey"); // AutoHotkey window key
+	            if (hWnd != IntPtr.Zero) {
+	                IntPtr lParam = Marshal.StringToHGlobalAnsi(deviceName); // Pass the device name as lParam
+	                PostMessage(hWnd, WM_DEVICECHANGE, IntPtr.Zero, lParam);
+	                Marshal.FreeHGlobal(lParam); // free the memory
+	            } else {
+	                Console.WriteLine("AutoHotkey window not found.");
+	            }
+	        }
+		// end of functions for comunication with AHK
+		
 		public static string GetRawInputDeviceName(IntPtr deviceHandle) {
 			uint dataSize = 0;
 			int res = GetRawInputDeviceInfo(deviceHandle, RIDI_DEVICENAME, null, ref dataSize);
 			Debug.Assert(res == 0);
 			Debug.Assert(dataSize > 0);
-
+			
 			StringBuilder buffer = new StringBuilder((int)dataSize);
 			res = GetRawInputDeviceInfo(deviceHandle, RIDI_DEVICENAME, buffer, ref dataSize);
 			Debug.Assert(res > 0);
+			
+			string currentDeviceName = buffer.ToString();
 
-			return buffer.ToString();
+		  	//for AHK: If the current device does not correspond to the previous device, send the message to AutoHotKey
+		    	if (!currentDeviceName.Equals(lastDeviceName, StringComparison.OrdinalIgnoreCase)) {
+				SendDeviceToAutoHotkey(currentDeviceName);
+				lastDeviceName = currentDeviceName; // Update the previous device
+			}
+			
+			return currentDeviceName;
 		}
 
 		public const uint RIDI_PREPARSEDDATA = 0x20000005;
